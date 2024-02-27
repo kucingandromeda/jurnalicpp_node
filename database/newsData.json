@@ -1,0 +1,22 @@
+[
+  {
+    "judul": "Training of Young Innovation Journalist",
+    "penulis": ["Fauzan Prayoga I", "14", "10", "2023"],
+    "genre": "artikel",
+    "url": "Training-of-Young-Innovation-Journalist",
+    "img": "image_data/Training of Young Innovation JournalistIMG.png"
+  },
+  {
+    "judul": "MIRANDA DAN TEKA-TEKI PENGIRIM PESAN",
+    "penulis": ["Fauzan Prayoga I", "7", "11", "2023"],
+    "genre": "sastra",
+    "url": "MIRANDA-DAN-TEKA-TEKI-PENGIRIM-PESAN"
+  },
+  {
+    "judul": "Karya divisi sastra",
+    "penulis": ["Fauzan Prayoga I", "13", "10", "2023"],
+    "genre": "sastra",
+    "img": "image_data/Karya divisi sastraIMG.png",
+    "url": "Karya-divisi-sastra"
+  }
+]
