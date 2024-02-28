@@ -1,11 +1,6 @@
 {
   "judul": "Training of Young Innovation Journalist",
-  "penulis": [
-    "Fauzan Prayoga I",
-    "14",
-    "10",
-    "2023"
-  ],
+  "penulis": ["Fauzan Prayoga I", "14", "10", "2023"],
   "genre": "artikel",
   "url": "Training-of-Young-Innovation-Journalist",
   "img": "image_data/Training of Young Innovation JournalistIMG.png",
@@ -24,11 +19,11 @@
     },
     {
       "type": "paragraf",
-      "value": ""Pelatihan ini kita harapkan mampu meningkatkan soft-skill teman-teman sekalian dalam teknik pengolahan berita dan penyampaiannya, baik itu pengolahan video, pengolahan naskah, dan lainnya," ujarnya. Tak lupa, sebagai ketua Fauzan juga menyematkan harapan kepada tim Jurnalistik MAN Insan Cendekia Padang Pariaman agar lebih optimal kedepannya, terlebih setelah diadakannya pelatihan ini."
+      "value": "'Pelatihan ini kita harapkan mampu meningkatkan soft-skill teman-teman sekalian dalam teknik pengolahan berita dan penyampaiannya, baik itu pengolahan video, pengolahan naskah, dan lainnya,' ujarnya. Tak lupa, sebagai ketua Fauzan juga menyematkan harapan kepada tim Jurnalistik MAN Insan Cendekia Padang Pariaman agar lebih optimal kedepannya, terlebih setelah diadakannya pelatihan ini."
     },
     {
       "type": "paragraf",
-      "value": ""Diharapkan juga teman-teman sekalian (anggota jurnalistik) mampu mengelola dan menyampaikan berita terkait keberlangsungan kegiatan seputar MAN Insan Cendekia Padang Pariaman seperti jurnalis pada umumnya, dan semoga dengan ini ekskul Jurnalistik lebih maju lagi kedepannya," tutupnya."
+      "value": "'Diharapkan juga teman-teman sekalian (anggota jurnalistik) mampu mengelola dan menyampaikan berita terkait keberlangsungan kegiatan seputar MAN Insan Cendekia Padang Pariaman seperti jurnalis pada umumnya, dan semoga dengan ini ekskul Jurnalistik lebih maju lagi kedepannya,' tutupnya."
     }
   ]
 }

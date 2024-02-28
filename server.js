@@ -28,7 +28,7 @@ app.get("/newsData", (req, res) => {
 app.get("/getData/:value", (req, res, next) => {
   const request = req.params.value;
   fs.readFile(
-    `./database/api/${request}.txt`,
+    `./database/api/${request}.json`,
 
     (err, data) => {
       res.header("Access-Control-Allow-Origin", "http://localhost:5173");
