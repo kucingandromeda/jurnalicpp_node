@@ -1,7 +1,15 @@
 ///set up phase
+
+//set up path
+const path = require("path");
+
 // set up express
 const express = require("express");
 const app = express();
+app.use(
+  "database/image_data",
+  express.static(path.join(__dirname, "database/image_data"))
+);
 
 //set up cors
 const cors = require("cors");
@@ -39,6 +47,22 @@ app.get("/getData/:value", (req, res, next) => {
       res.send(data);
     }
   );
+});
+
+app.get("/getImg/:img", (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  // fs.readFile(
+  //   `./database/image_data/${req.params.img}.png`,
+  //   { encoding: "base64url" },
+  //   (err, data) => {
+  //     res.send(data);
+  //   }
+  // );
+  const url = path.join(
+    __dirname,
+    "database/image_data/Training-of-Young-Innovation-JournalistIMG.png"
+  );
+  res.sendFile(url);
 });
 
 app.listen(8000, () => {

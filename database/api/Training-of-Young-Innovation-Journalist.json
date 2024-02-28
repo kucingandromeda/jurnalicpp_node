@@ -3,7 +3,7 @@
   "penulis": ["Fauzan Prayoga I", "14", "10", "2023"],
   "genre": "artikel",
   "url": "Training-of-Young-Innovation-Journalist",
-  "img": "image_data/Training of Young Innovation JournalistIMG.png",
+  "img": "http://localhost:8000/getImg/Training-of-Young-Innovation-JournalistIMG.png",
   "isi": [
     {
       "type": "paragraf",
