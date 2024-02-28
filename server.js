@@ -19,7 +19,7 @@ app.get("/newsData", (req, res) => {
 
 app.get("/getData/:value", (req, res) => {
   fs.readFile(
-    `./database/api/${req.params.value}.json`,
+    `./database/api/${req.params.value}.txt`,
     { encoding: "utf-8" },
     (err, data) => {
       res.send(data);
