@@ -3,6 +3,14 @@
 const express = require("express");
 const app = express();
 
+//set up cors
+const cors = require("cors");
+app.use(
+  cors({
+    origin: "http://localhost:5173/",
+  })
+);
+
 //set up file system
 const fs = require("fs");
 
@@ -17,13 +25,18 @@ app.get("/newsData", (req, res) => {
   );
 });
 
-app.get("/getData/:value", (req, res) => {
+app.get("/getData/:value", (req, res, next) => {
+  const request = req.params.value;
   fs.readFile(
-    `./database/api/${req.params.value}.txt`,
-    { encoding: "utf-8" },
+    `./database/api/${request}.txt`,
+
     (err, data) => {
+      res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept"
+      );
       res.send(data);
-      console.log(data);
     }
   );
 });
