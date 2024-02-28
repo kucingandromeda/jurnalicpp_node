@@ -17,6 +17,17 @@ app.get("/newsData", (req, res) => {
   );
 });
 
+app.get("/getData/:value", (req, res) => {
+  fs.readFile(
+    `./database/api/${req.params.value}.json`,
+    { encoding: "utf-8" },
+    (err, data) => {
+      res.send(data);
+      console.log(data);
+    }
+  );
+});
+
 app.listen(8000, () => {
   console.log("server running");
 });
