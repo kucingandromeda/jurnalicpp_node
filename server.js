@@ -58,10 +58,7 @@ app.get("/getImg/:img", (req, res, next) => {
   //     res.send(data);
   //   }
   // );
-  const url = path.join(
-    __dirname,
-    "database/image_data/Training-of-Young-Innovation-JournalistIMG.png"
-  );
+  const url = path.join(__dirname, `database/image_data/${req.params.img}`);
   res.sendFile(url);
 });
 
