@@ -22,12 +22,17 @@ app.use(
 //set up file system
 const fs = require("fs");
 
+//variable area
+// const frontEndUrl = "http://localhost:5173";
+const frontEndUrl = "https://jurnalicpp.online";
+
 //exe phase
 app.get("/newsData", (req, res) => {
   fs.readFile(
     "./database/newsData.json",
     { encoding: "utf-8" },
     (err, data) => {
+      res.header("Access-Control-Allow-Origin", frontEndUrl);
       res.send(data);
     }
   );
@@ -39,7 +44,7 @@ app.get("/getData/:value", (req, res, next) => {
     `./database/api/${request}.json`,
 
     (err, data) => {
-      res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+      res.header("Access-Control-Allow-Origin", frontEndUrl);
       res.header(
         "Access-Control-Allow-Headers",
         "Origin, X-Requested-With, Content-Type, Accept"
