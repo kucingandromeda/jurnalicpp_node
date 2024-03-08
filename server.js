@@ -55,7 +55,7 @@ app.get("/getData/:value", (req, res, next) => {
 });
 
 app.get("/getImg/:img", (req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header("Access-Control-Allow-Origin", frontEndUrl);
   // fs.readFile(
   //   `./database/image_data/${req.params.img}.png`,
   //   { encoding: "base64url" },
