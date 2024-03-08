@@ -11,12 +11,5 @@
     "penulis": ["Fauzan Prayoga I", "7", "11", "2023"],
     "genre": "sastra",
     "url": "MIRANDA-DAN-TEKA-TEKI-PENGIRIM-PESAN"
-  },
-  {
-    "judul": "Karya divisi sastra",
-    "penulis": ["Fauzan Prayoga I", "13", "10", "2023"],
-    "genre": "sastra",
-    "img": "image_data/Karya divisi sastraIMG.png",
-    "url": "Karya-divisi-sastra"
   }
 ]
