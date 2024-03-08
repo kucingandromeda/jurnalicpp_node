@@ -56,13 +56,6 @@ app.get("/getData/:value", (req, res, next) => {
 
 app.get("/getImg/:img", (req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
-  // fs.readFile(
-  //   `./database/image_data/${req.params.img}.png`,
-  //   { encoding: "base64url" },
-  //   (err, data) => {
-  //     res.send(data);
-  //   }
-  // );
   const url = path.join(__dirname, `database/image_data/${req.params.img}`);
   res.sendFile(url);
 });
