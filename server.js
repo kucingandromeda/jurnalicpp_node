@@ -3,13 +3,12 @@
 //set up path
 const path = require("path");
 
-// set up express
+// set up express and body-parser
+const bodyParser = require("body-parser");
 const express = require("express");
 const app = express();
-app.use(
-  "database/image_data",
-  express.static(path.join(__dirname, "database/image_data"))
-);
+app.use(bodyParser.json());
+app.use("db/api", express.static(path.join(__dirname, "db/api")));
 
 //set up cors
 const cors = require("cors");
@@ -25,27 +24,47 @@ const fs = require("fs");
 //setup mysql
 const mysql = require("mysql");
 
-// const db = mysql.createConnection({
-//   host: "103.175.216.188",
-//   user: "jicpp",
-//   password: "ADMIN",
-// });
-
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
+  host: "103.175.216.188",
+  user: "jicpp",
+  password: "ADMIN",
   database: "jicpp",
 });
+
+// const db = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "jicpp",
+// });
 
 db.connect(function (err) {
   if (err) throw err;
   console.log("db is Connected!");
 });
 
+//multer
+const multer = require("multer");
+const disk = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "db/api");
+  },
+  filename: (req, file, cb) => {
+    if (file.mimetype.includes("json")) {
+      const filename = file.originalname.replace(/ /g, "-");
+      cb(null, filename);
+    } else {
+      const filename = file.originalname.replace(/ /g, "-");
+      cb(null, filename);
+    }
+  },
+});
+
+const upload = multer({ storage: disk });
+
 //variable area
-const frontEndUrl = "http://localhost:5173";
-// const frontEndUrl = "https://jurnalicpp.online";
+// const frontEndUrl = "http://localhost:5173";
+const frontEndUrl = "https://jurnalicpp.online";
 
 //exe phase
 
@@ -72,7 +91,7 @@ app.get("/newsData/:value", (req, res) => {
 app.get("/getData/:value", (req, res, next) => {
   const request = req.params.value;
   fs.readFile(
-    `./database/api/${request}.json`,
+    `./db/api/${request}.json`,
 
     (err, data) => {
       res.header("Access-Control-Allow-Origin", frontEndUrl);
@@ -87,8 +106,29 @@ app.get("/getData/:value", (req, res, next) => {
 
 app.get("/getImg/:img", (req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
-  const url = path.join(__dirname, `database/image_data/${req.params.img}`);
+  const url = path.join(__dirname, `db/api/${req.params.img}`);
   res.sendFile(url);
+});
+
+// post
+
+app.post("/admin/publish", upload.array("file"), (req, res) => {
+  const body = req.body;
+  res.header("Access-Control-Allow-Origin", frontEndUrl);
+  req.files.forEach((data) => {
+    if (data.mimetype.includes("json")) {
+      const fileName = data.filename.replace(".json", "");
+      const fileIMG = `${fileName}IMG.png`;
+      const url = fileName.replace(/ /g, "-");
+      db.query(
+        "INSERT INTO a_news_data (id, judul, penulis, genre, img, url) VALUES (?, ?, ? ,? ,? ,?)",
+        [null, fileName, body.penulis, body.genre, fileIMG, url],
+        (err, result) => {}
+      );
+    }
+  });
+
+  res.redirect(frontEndUrl + "/admin");
 });
 
 app.listen(8000, () => {
