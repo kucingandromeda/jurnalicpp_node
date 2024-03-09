@@ -22,20 +22,51 @@ app.use(
 //set up file system
 const fs = require("fs");
 
+//setup mysql
+const mysql = require("mysql");
+
+// const db = mysql.createConnection({
+//   host: "103.175.216.188",
+//   user: "jicpp",
+//   password: "ADMIN",
+// });
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "jicpp",
+});
+
+db.connect(function (err) {
+  if (err) throw err;
+  console.log("db is Connected!");
+});
+
 //variable area
 const frontEndUrl = "http://localhost:5173";
 // const frontEndUrl = "https://jurnalicpp.online";
 
 //exe phase
-app.get("/newsData", (req, res) => {
-  fs.readFile(
-    "./database/newsData.json",
-    { encoding: "utf-8" },
-    (err, data) => {
-      res.header("Access-Control-Allow-Origin", frontEndUrl);
-      res.send(data);
-    }
-  );
+
+// app.get("/newsData", (req, res) => {
+//   fs.readFile(
+//     "./database/newsData.json",
+//     { encoding: "utf-8" },
+//     (err, data) => {
+//       res.header("Access-Control-Allow-Origin", frontEndUrl);
+//       res.send(data);
+//     }
+//   );
+// });
+
+app.get("/newsData/:value", (req, res) => {
+  res.header("Access-Control-Allow-Origin", frontEndUrl);
+  if (req.params.value === "all") {
+    db.query("SELECT * FROM a_news_data", (err, result) => {
+      res.send(result);
+    });
+  }
 });
 
 app.get("/getData/:value", (req, res, next) => {
