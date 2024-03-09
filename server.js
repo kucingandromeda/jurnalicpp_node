@@ -23,8 +23,8 @@ app.use(
 const fs = require("fs");
 
 //variable area
-// const frontEndUrl = "http://localhost:5173";
-const frontEndUrl = "https://jurnalicpp.online";
+const frontEndUrl = "http://localhost:5173";
+// const frontEndUrl = "https://jurnalicpp.online";
 
 //exe phase
 app.get("/newsData", (req, res) => {
