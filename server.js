@@ -1,8 +1,8 @@
 ///set up phase
 
 //variable area
-const frontEndUrl = "http://localhost:5173";
-// const frontEndUrl = "https://jurnalicpp.online";
+// const frontEndUrl = "http://localhost:5173";
+const frontEndUrl = "https://jurnalicpp.online";
 
 //set up path
 const path = require("path");
@@ -15,39 +15,25 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("db/api", express.static(path.join(__dirname, "db/api")));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", frontEndUrl);
-  next();
-});
-
-//set up cors
-const cors = require("cors");
-app.use(
-  cors({
-    origin: "http://localhost:5173/",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  })
-);
-
 //set up file system
 const fs = require("fs");
 
 //setup mysql
 const mysql = require("mysql");
 
-// const db = mysql.createConnection({
-//   host: "103.175.216.188",
-//   user: "jicpp",
-//   password: "ADMIN",
-//   database: "jicpp",
-// });
-
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
+  host: "103.175.216.188",
+  user: "jicpp",
+  password: "ADMIN",
   database: "jicpp",
 });
+
+// const db = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "jicpp",
+// });
 
 db.connect(function (err) {
   if (err) throw err;
@@ -83,17 +69,6 @@ const upload = multer({ storage: disk, fileFilter: filterMulter });
 
 //exe phase
 
-// app.get("/newsData", (req, res) => {
-//   fs.readFile(
-//     "./database/newsData.json",
-//     { encoding: "utf-8" },
-//     (err, data) => {
-//       res.header("Access-Control-Allow-Origin", frontEndUrl);
-//       res.send(data);
-//     }
-//   );
-// });
-
 app.get("/newsData/:value", (req, res) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
   if (req.params.value === "all") {
@@ -127,29 +102,6 @@ app.get("/getImg/:img", (req, res, next) => {
 
 // post
 
-// app.post("/admin/publish", upload.array("file"), (req, res) => {
-//   const body = req.body;
-//   res.header("Access-Control-Allow-Origin", frontEndUrl);
-//   req.files.forEach((data) => {
-//     if (data.mimetype.includes("json")) {
-//       const fileName = data.filename.replace(".json", "");
-//       const fileIMG = `${fileName}IMG.png`;
-//       const url = fileName.replace(/ /g, "-");
-//       db.query(
-//         "INSERT INTO a_news_data (id, judul, penulis, genre, img, url) VALUES (?, ?, ? ,? ,? ,?)",
-//         [null, fileName, body.penulis, body.genre, fileIMG, url],
-//         (err, result) => {
-//           if (result) {
-//             console.log("publish sucsesss");
-//           }
-//         }
-//       );
-//     }
-//   });
-
-//   res.send("woke");
-// });
-
 app.post("/admin/publish", upload.array("files"), (req, res) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
   if (req.files.length != 0 && req.body.penulis && req.body.genre) {
@@ -178,43 +130,11 @@ app.post("/admin/publish", upload.array("files"), (req, res) => {
             }
           }
         );
-        // console.log(`
-        // judul = ${judul}
-        // penulis = ${penulis}
-        // genre = ${genre}
-        // img = ${img}
-        // url = ${url}
-        // `);
       }
     });
   } else {
     res.send({ status: "error", msg: "errrr" });
   }
-  // let error = false;
-
-  // if (req.files.length <= 2) {
-  //   for (let i = 0; i < req.files.length; i++) {
-  //     if (
-  //       req.files[i].mimetype.includes("image") ||
-  //       req.files[0].mimetype.includes("json")
-  //     ) {
-  //     } else {
-  //       res.send({
-  //         status: "error",
-  //         msg: "terdeteksi data diluar json dan img",
-  //       });
-  //       error = true;
-  //       break;
-  //     }
-  //   }
-
-  //   res.send({ status: "sucsess", lengthSend: req.files.length, msg: null });
-  // } else {
-  //   res.send({
-  //     status: "error",
-  //     msg: "data yang diterima terdeteksi lebih dari 2",
-  //   });
-  // }
 });
 
 app.listen(8000, () => {
