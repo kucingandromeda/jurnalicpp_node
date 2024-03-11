@@ -1,11 +1,8 @@
 ///set up phase
 
 //variable area
-// const frontEndUrl = "http://localhost:5173";
-const frontEndUrl = [
-  "https://jurnalicpp.online",
-  "https://admin2007.jurnalicpp.online",
-];
+const frontEndUrl = "http://localhost:5173";
+// const frontEndUrl = "https://jurnalicpp.online";
 
 //set up path
 const path = require("path");
@@ -18,25 +15,30 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("db/api", express.static(path.join(__dirname, "db/api")));
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", frontEndUrl);
+  next();
+});
+
 //set up file system
 const fs = require("fs");
 
 //setup mysql
 const mysql = require("mysql");
 
-const db = mysql.createConnection({
-  host: "103.175.216.188",
-  user: "jicpp",
-  password: "ADMIN",
-  database: "jicpp",
-});
-
 // const db = mysql.createConnection({
-//   host: "localhost",
-//   user: "root",
-//   password: "",
+//   host: "103.175.216.188",
+//   user: "jicpp",
+//   password: "ADMIN",
 //   database: "jicpp",
 // });
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "jicpp",
+});
 
 db.connect(function (err) {
   if (err) throw err;
@@ -45,6 +47,7 @@ db.connect(function (err) {
 
 //multer
 const multer = require("multer");
+const { Console } = require("console");
 const disk = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "db/api");
@@ -113,10 +116,10 @@ app.post("/admin/publish", upload.array("files"), (req, res) => {
         const judul = data.originalname.replace(".json", "");
         const penulis = req.body.penulis;
         const genre = req.body.genre;
-        const img = req.body.imgStat
+        const img = JSON.parse(req.body.imgStat)
           ? `${data.filename.replace(".json", "")}IMG.png`
           : null;
-        console.log(img);
+
         const url = data.filename.replace(".json", "");
         db.query(
           "INSERT INTO a_news_data (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
@@ -147,7 +150,6 @@ app.post("/admin/edit", upload.single("atribut"), (req, res) => {
     dbMysql: false,
     dbDir: false,
   };
-  res.header("Access-Control-Allow-Origin", frontEndUrl);
   if (req.body.id && req.body.atribut && req.body.new) {
     db.query(
       `UPDATE a_news_data SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
@@ -179,7 +181,11 @@ app.post("/admin/edit", upload.single("atribut"), (req, res) => {
                         JSON.stringify(dataNews, null, 2),
                         (err) => {
                           if (err) throw err;
-                          console.log("berhasil diubah");
+                          res.header(
+                            "Access-Control-Allow-Origin",
+                            frontEndUrl
+                          );
+                          res.send({ status: "ok" });
                         }
                       );
                     });
@@ -191,7 +197,8 @@ app.post("/admin/edit", upload.single("atribut"), (req, res) => {
                   JSON.stringify(dataNews, null, 2),
                   (err) => {
                     if (err) throw err;
-                    console.log("berhasil diubah");
+                    res.header("Access-Control-Allow-Origin", frontEndUrl);
+                    res.send({ status: "ok" });
                   }
                 );
               }
@@ -200,32 +207,42 @@ app.post("/admin/edit", upload.single("atribut"), (req, res) => {
         }
       }
     );
-    res.send({ status: "ok" });
   } else {
+    res.header("Access-Control-Allow-Origin", frontEndUrl);
     res.send({ status: "error", m: "ada data yang tdk lengkap" });
   }
 });
 
 app.post("/admin/del", upload.array("id"), (req, res) => {
+  res.header("Access-Control-Allow-Origin", frontEndUrl);
   const stat = {
     dbMysql: false,
     dbDir: false,
   };
-  res.header("Access-Control-Allow-Origin", frontEndUrl);
   db.query(`DELETE FROM a_news_data WHERE id=${req.body.id}`, (err, result) => {
     if (err) throw err;
 
-    stat.dbMysql = true;
-    fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
-      if (err) throw err;
-
-      fs.rm(`./db/api/${req.body.Bjudul}IMG.png`, (err) => {
+    if (result.affectedRows != 0) {
+      stat.dbMysql = true;
+      fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
         if (err) throw err;
+        if (req.body.img != "null") {
+          fs.rm(`./db/api/${req.body.img}`, (err) => {
+            if (err) throw err;
 
-        stat.dbDir = true;
-        res.send({ status: stat });
+            stat.dbDir = true;
+            res.header("Access-Control-Allow-Origin", frontEndUrl);
+            res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
+          });
+        } else {
+          stat.dbDir = true;
+          res.header("Access-Control-Allow-Origin", frontEndUrl);
+          res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
+        }
       });
-    });
+    } else {
+      res.send(`"error terjadi, mungkin karena data ditak ditemukan di db"`);
+    }
   });
 });
 
