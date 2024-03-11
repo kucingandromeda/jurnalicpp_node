@@ -1,8 +1,11 @@
 ///set up phase
 
 //variable area
-const frontEndUrl = "http://localhost:5173";
-// const frontEndUrl = ["https://jurnalicpp.online", "https://admin2007.jurnalicpp.online"];
+// const frontEndUrl = "http://localhost:5173";
+const frontEndUrl = [
+  "https://jurnalicpp.online",
+  "https://admin2007.jurnalicpp.online",
+];
 
 //set up path
 const path = require("path");
@@ -21,19 +24,19 @@ const fs = require("fs");
 //setup mysql
 const mysql = require("mysql");
 
-// const db = mysql.createConnection({
-//   host: "103.175.216.188",
-//   user: "jicpp",
-//   password: "ADMIN",
-//   database: "jicpp",
-// });
-
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
+  host: "103.175.216.188",
+  user: "jicpp",
+  password: "ADMIN",
   database: "jicpp",
 });
+
+// const db = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "jicpp",
+// });
 
 db.connect(function (err) {
   if (err) throw err;
