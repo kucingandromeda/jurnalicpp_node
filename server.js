@@ -1,8 +1,8 @@
 ///set up phase
 
 //variable area
-const frontEndUrl = "http://localhost:5173";
-// const frontEndUrl = "https://jurnalicpp.online";
+// const frontEndUrl = "http://localhost:5173";
+const frontEndUrl = "https://jurnalicpp.online";
 
 //set up path
 const path = require("path");
@@ -26,19 +26,19 @@ const fs = require("fs");
 //setup mysql
 const mysql = require("mysql");
 
-// const db = mysql.createConnection({
-//   host: "103.175.216.188",
-//   user: "jicpp",
-//   password: "ADMIN",
-//   database: "jicpp",
-// });
-
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
+  host: "103.175.216.188",
+  user: "jicpp",
+  password: "ADMIN",
   database: "jicpp",
 });
+
+// const db = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "jicpp",
+// });
 
 db.connect(function (err) {
   if (err) throw err;
@@ -78,9 +78,13 @@ const upload = multer({ storage: disk, fileFilter: filterMulter });
 app.get("/newsData/:value", (req, res) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
   if (req.params.value === "all") {
-    db.query("SELECT * FROM a_news_data", (err, result) => {
-      res.send(result);
-    });
+    db.query(
+      `SELECT * FROM a_news_data
+    ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
+      (err, result) => {
+        res.send(result);
+      }
+    );
   }
 });
 
@@ -104,6 +108,26 @@ app.get("/getImg/:img", (req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
   const url = path.join(__dirname, `db/api/${req.params.img}`);
   res.sendFile(url);
+});
+
+app.get("/getSection/:type", (req, res) => {
+  if (req.params.type === "news") {
+    db.query(
+      `SELECT * FROM a_news_data
+    ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
+      (err, result) => {
+        res.send(result);
+      }
+    );
+  } else {
+    db.query(
+      `SELECT * FROM a_news_data WHERE genre='${req.params.type}'
+      ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
+      (err, result) => {
+        res.send(result);
+      }
+    );
+  }
 });
 
 // post
