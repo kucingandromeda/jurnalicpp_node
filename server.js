@@ -14,6 +14,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("db/api", express.static(path.join(__dirname, "db/api")));
+app.use("api", express.static(path.join(__dirname, "api")));
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
@@ -47,7 +48,6 @@ db.connect(function (err) {
 
 //multer
 const multer = require("multer");
-const { Console } = require("console");
 const disk = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "db/api");
@@ -79,7 +79,7 @@ app.get("/newsData/:value", (req, res) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
   if (req.params.value === "all") {
     db.query(
-      `SELECT * FROM a_news_data
+      `SELECT * FROM a_news_index
     ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
       (err, result) => {
         res.send(result);
@@ -90,18 +90,19 @@ app.get("/newsData/:value", (req, res) => {
 
 app.get("/getData/:value", (req, res, next) => {
   const request = req.params.value;
-  fs.readFile(
-    `./db/api/${request}.json`,
+  res.sendFile(path.join(__dirname, `./api/${request}.html`));
+  // fs.readFile(
+  //   `./db/api/${request}.json`,
 
-    (err, data) => {
-      res.header("Access-Control-Allow-Origin", frontEndUrl);
-      res.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-      );
-      res.send(data);
-    }
-  );
+  //   (err, data) => {
+  //     res.header("Access-Control-Allow-Origin", frontEndUrl);
+  //     res.header(
+  //       "Access-Control-Allow-Headers",
+  //       "Origin, X-Requested-With, Content-Type, Accept"
+  //     );
+  //     res.send(data);
+  //   }
+  // );
 });
 
 app.get("/getImg/:img", (req, res, next) => {
@@ -128,6 +129,12 @@ app.get("/getSection/:type", (req, res) => {
       }
     );
   }
+});
+
+//////testing
+
+app.get("/test", (req, res) => {
+  res.sendFile(path.join(__dirname, `db/api/index.html`));
 });
 
 // post
