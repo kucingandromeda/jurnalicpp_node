@@ -1,8 +1,8 @@
 ///set up phase
 
 //variable area
-// const frontEndUrl = "http://localhost:5173";
-const frontEndUrl = "https://jurnalicpp.online";
+const frontEndUrl = "http://localhost:5173";
+// const frontEndUrl = "https://jurnalicpp.online";
 
 //set up path
 const path = require("path");
@@ -26,19 +26,19 @@ const fs = require("fs");
 //setup mysql
 const mysql = require("mysql");
 
-const db = mysql.createConnection({
-  host: "103.175.216.188",
-  user: "jicpp",
-  password: "ADMIN",
-  database: "jicpp",
-});
-
 // const db = mysql.createConnection({
-//   host: "localhost",
-//   user: "root",
-//   password: "",
+//   host: "103.175.216.188",
+//   user: "jicpp",
+//   password: "ADMIN",
 //   database: "jicpp",
 // });
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "jicpp",
+});
 
 db.connect(function (err) {
   if (err) throw err;
@@ -131,6 +131,11 @@ app.get("/getSection/:type", (req, res) => {
 });
 
 // post
+
+app.post("/admin/publishtest", upload.array("files"), (req, res) => {
+  // console.log(req.body);
+  res.send({ stat: "woke" });
+});
 
 app.post("/admin/publish", upload.array("files"), (req, res) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
