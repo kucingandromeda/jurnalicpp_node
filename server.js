@@ -49,9 +49,9 @@ db.connect(function (err) {
 //multer
 const multer = require("multer");
 const disk = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "api");
-  },
+  // destination: (req, file, cb) => {
+  //   cb(null, "api");
+  // },
   filename: (req, file, cb) => {
     if (file.mimetype.includes("html")) {
       const filename = file.originalname.replace(/ /g, "-");
@@ -70,7 +70,9 @@ const filterMulter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage: disk, fileFilter: filterMulter });
+const testMemory = multer.memoryStorage();
+
+const upload = multer({ storage: testMemory, fileFilter: filterMulter });
 
 //exe phase
 
@@ -84,29 +86,24 @@ app.get("/newsData/:value", (req, res) => {
         res.send(result);
       }
     );
+  } else {
+    db.query(
+      `SELECT * FROM a_news_index WHERE url = '${req.params.value}'`,
+      (err, result) => {
+        res.send(result);
+      }
+    );
   }
 });
 
 app.get("/getData/:value", (req, res, next) => {
   const request = req.params.value;
-  res.sendFile(path.join(__dirname, `./api/${request}.html`));
-  // fs.readFile(
-  //   `./db/api/${request}.json`,
-
-  //   (err, data) => {
-  //     res.header("Access-Control-Allow-Origin", frontEndUrl);
-  //     res.header(
-  //       "Access-Control-Allow-Headers",
-  //       "Origin, X-Requested-With, Content-Type, Accept"
-  //     );
-  //     res.send(data);
-  //   }
-  // );
+  res.sendFile(path.join(__dirname, `./api/${request}/${request}.html`));
 });
 
-app.get("/getImg/:img", (req, res, next) => {
+app.get("/getImg/:url/:img", (req, res, next) => {
   res.header("Access-Control-Allow-Origin", frontEndUrl);
-  const url = path.join(__dirname, `db/api/${req.params.img}`);
+  const url = path.join(__dirname, `api/${req.params.url}/${req.params.img}`);
   res.sendFile(url);
 });
 
@@ -141,34 +138,92 @@ app.get("/test", (req, res) => {
 app.post("/admin/publishtest", upload.array("files"), (req, res) => {
   if (!req.files[0])
     return res.send('"sepertinya ini bukan HTML ataupun image yah"');
-  req.files.forEach((data) => {
-    if (data.mimetype.includes("html")) {
-      const judul = data.originalname.slice(0, -5);
-      const penulis = req.body.penulis;
-      const genre = req.body.genre;
-      // const img = req.files.find((data) => data.mimetype.includes("image"));
-      const img = JSON.parse(req.body.imgStat)
-        ? req.files.find((data) => data.mimetype.includes("image"))
-        : null;
-      const url = judul.replace(/ /g, "-");
-      db.query(
-        "INSERT INTO a_news_index (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
-        [null, judul, penulis, genre, img ? img.filename : null, url],
-        (err, result) => {
-          console.log(result);
+
+  const urlRaw = req.files.find((data) => data.mimetype.includes("html"));
+  const judul = urlRaw.originalname.slice(0, -5);
+
+  db.query(
+    `SELECT judul FROM a_news_index WHERE judul='${judul}'`,
+    (err, result) => {
+      if (err) throw err;
+      if (result.length > 0)
+        return res.send('"maaf bro sepertinya judul udh kepakai"');
+      const url = urlRaw.originalname.slice(0, -5).replace(/ /g, "-");
+      req.files.forEach((data) => {
+        if (data.mimetype.includes("html")) {
+          const penulis = req.body.penulis;
+          const genre = req.body.genre;
+          const img = JSON.parse(req.body.imgStat)
+            ? req.files.find((data) => data.mimetype.includes("image"))
+            : null;
+          const buffer = Buffer.from(data.buffer);
+          console.log(img);
+
+          fs.readdir("./api", { encoding: "utf-8" }, (err, files) => {
+            if (!files.find((folder) => folder === url)) {
+              db.query(
+                "INSERT INTO a_news_index (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
+                [null, judul, penulis, genre, null, url],
+                (err, result) => {
+                  if (err) throw err;
+                  fs.mkdir(`api/${url}`, (err) => {
+                    fs.writeFile(`api/${url}/${url}.html`, buffer, (err) => {
+                      if (err) throw err;
+                    });
+                  });
+                }
+              );
+            } else {
+              db.query(
+                "INSERT INTO a_news_index (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                  null,
+                  judul,
+                  penulis,
+                  genre,
+                  img ? img.originalname : null,
+                  url,
+                ],
+                (err, result) => {
+                  if (err) throw err;
+
+                  fs.writeFile(`api/${url}/${url}.html`, buffer, (err) => {
+                    if (err) throw err;
+                  });
+                }
+              );
+            }
+          });
+        } else {
+          const imgBuffer = Buffer.from(data.buffer);
+
+          fs.readdir("./api", { encoding: "utf-8" }, (err, files) => {
+            if (!files.find((folder) => folder === url)) {
+              fs.mkdir(`api/${url}`, (err) => {
+                fs.writeFile(
+                  `api/${url}/${data.originalname}`,
+                  imgBuffer,
+                  (err) => {
+                    if (err) throw console.log("eror");
+                    res.send('"woke"');
+                  }
+                );
+              });
+            } else {
+              fs.writeFile(
+                `api/${url}/${data.originalname}`,
+                imgBuffer,
+                (err) => {
+                  if (err) throw console.log("eror");
+                  res.send('"woke"');
+                }
+              );
+            }
+          });
         }
-      );
-      // const obj = {
-      //   judul: judul,
-      //   penulis: penulis,
-      //   genre: genre,
-      //   img: img ? img.filename : null,
-      //   url: url,
-      // };
-      // console.log(obj);
+      });
     }
-  });
-  res.send('"woke"');
+  );
 });
 
 app.post("/admin/publish", upload.array("files"), (req, res) => {
