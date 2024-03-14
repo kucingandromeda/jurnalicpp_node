@@ -48,19 +48,8 @@ db.connect(function (err) {
 
 //multer
 const multer = require("multer");
-const disk = multer.diskStorage({
-  // destination: (req, file, cb) => {
-  //   cb(null, "api");
-  // },
-  filename: (req, file, cb) => {
-    if (file.mimetype.includes("html")) {
-      const filename = file.originalname.replace(/ /g, "-");
-      cb(null, filename);
-    } else {
-      cb(null, file.originalname);
-    }
-  },
-});
+
+const multerMemory = multer.memoryStorage();
 
 const filterMulter = (req, file, cb) => {
   if (file.mimetype.includes("image") || file.mimetype.includes("html")) {
@@ -70,9 +59,7 @@ const filterMulter = (req, file, cb) => {
   }
 };
 
-const testMemory = multer.memoryStorage();
-
-const upload = multer({ storage: testMemory, fileFilter: filterMulter });
+const upload = multer({ storage: multerMemory, fileFilter: filterMulter });
 
 //exe phase
 
@@ -110,7 +97,7 @@ app.get("/getImg/:url/:img", (req, res, next) => {
 app.get("/getSection/:type", (req, res) => {
   if (req.params.type === "news") {
     db.query(
-      `SELECT * FROM a_news_data
+      `SELECT * FROM a_news_index
     ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
       (err, result) => {
         res.send(result);
@@ -118,7 +105,7 @@ app.get("/getSection/:type", (req, res) => {
     );
   } else {
     db.query(
-      `SELECT * FROM a_news_data WHERE genre='${req.params.type}'
+      `SELECT * FROM a_news_index WHERE genre='${req.params.type}'
       ORDER BY id DESC, judul DESC, penulis DESC, genre DESC, img DESC, url DESC`,
       (err, result) => {
         res.send(result);
@@ -127,15 +114,9 @@ app.get("/getSection/:type", (req, res) => {
   }
 });
 
-//////testing
-
-app.get("/test", (req, res) => {
-  res.sendFile(path.join(__dirname, `db/api/index.html`));
-});
-
 // post
 
-app.post("/admin/publishtest", upload.array("files"), (req, res) => {
+app.post("/admin/publish", upload.array("files"), (req, res) => {
   if (!req.files[0])
     return res.send('"sepertinya ini bukan HTML ataupun image yah"');
 
@@ -163,7 +144,14 @@ app.post("/admin/publishtest", upload.array("files"), (req, res) => {
             if (!files.find((folder) => folder === url)) {
               db.query(
                 "INSERT INTO a_news_index (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
-                [null, judul, penulis, genre, null, url],
+                [
+                  null,
+                  judul,
+                  penulis,
+                  genre,
+                  img ? img.originalname : null,
+                  url,
+                ],
                 (err, result) => {
                   if (err) throw err;
                   fs.mkdir(`api/${url}`, (err) => {
@@ -226,144 +214,109 @@ app.post("/admin/publishtest", upload.array("files"), (req, res) => {
   );
 });
 
-app.post("/admin/publish", upload.array("files"), (req, res) => {
-  res.header("Access-Control-Allow-Origin", frontEndUrl);
-  if (req.files.length != 0 && req.body.penulis && req.body.genre) {
-    req.files.forEach((data, i) => {
-      if (data.mimetype.includes("json")) {
-        const judul = data.originalname.replace(".json", "");
-        const penulis = req.body.penulis;
-        const genre = req.body.genre;
-        const img = JSON.parse(req.body.imgStat)
-          ? `${data.filename.replace(".json", "")}IMG.png`
-          : null;
-
-        const url = data.filename.replace(".json", "");
-        db.query(
-          "INSERT INTO a_news_data (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
-          [null, judul, penulis, genre, img, url],
-          (err, result) => {
-            if (result) {
-              res.send({
-                status: "sucsess",
-                lengthSend: req.files.length,
-                msg: null,
-              });
-            } else {
-              res.send({ status: "err", msg: "db is error" });
-            }
-          }
-        );
-      }
-    });
-  } else {
-    res.send({ status: "error", msg: "errrr" });
-  }
-});
-
 //edit
 
-app.post("/admin/edit", upload.single("atribut"), (req, res) => {
-  const stat = {
-    dbMysql: false,
-    dbDir: false,
-  };
-  if (req.body.id && req.body.atribut && req.body.new) {
-    db.query(
-      `UPDATE a_news_data SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
-      (err, result) => {
-        if (err) throw err;
-        if (result) {
-          stat.dbMysql = true;
-          fs.readFile(
-            `./db/api/${req.body.Bjudul}.json`,
-            { encoding: "utf-8" },
-            (err, data) => {
-              if (err) throw err;
-              const dataNews = JSON.parse(data);
-              dataNews[req.body.atribut] = req.body.new;
+// app.post("/admin/edit", upload.single("atribut"), (req, res) => {
+//   const stat = {
+//     dbMysql: false,
+//     dbDir: false,
+//   };
+//   if (req.body.id && req.body.atribut && req.body.new) {
+//     db.query(
+//       `UPDATE a_news_data SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
+//       (err, result) => {
+//         if (err) throw err;
+//         if (result) {
+//           stat.dbMysql = true;
+//           fs.readFile(
+//             `./db/api/${req.body.Bjudul}.json`,
+//             { encoding: "utf-8" },
+//             (err, data) => {
+//               if (err) throw err;
+//               const dataNews = JSON.parse(data);
+//               dataNews[req.body.atribut] = req.body.new;
 
-              if (req.body.atribut === "judul") {
-                const url = dataNews.judul;
-                const newUrl = url.replace(/ /g, "-");
-                db.query(
-                  `UPDATE a_news_data SET url='${newUrl}' WHERE id=${req.body.id}`,
-                  (err, result) => {
-                    if (err) throw err;
+//               if (req.body.atribut === "judul") {
+//                 const url = dataNews.judul;
+//                 const newUrl = url.replace(/ /g, "-");
+//                 db.query(
+//                   `UPDATE a_news_data SET url='${newUrl}' WHERE id=${req.body.id}`,
+//                   (err, result) => {
+//                     if (err) throw err;
 
-                    dataNews["url"] = newUrl;
-                    fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
-                      if (err) throw err;
-                      fs.writeFile(
-                        `./db/api/${newUrl}.json`,
-                        JSON.stringify(dataNews, null, 2),
-                        (err) => {
-                          if (err) throw err;
-                          res.header(
-                            "Access-Control-Allow-Origin",
-                            frontEndUrl
-                          );
-                          res.send({ status: "ok" });
-                        }
-                      );
-                    });
-                  }
-                );
-              } else {
-                fs.writeFile(
-                  `./db/api/${req.body.Bjudul}.json`,
-                  JSON.stringify(dataNews, null, 2),
-                  (err) => {
-                    if (err) throw err;
-                    res.header("Access-Control-Allow-Origin", frontEndUrl);
-                    res.send({ status: "ok" });
-                  }
-                );
-              }
-            }
-          );
-        }
-      }
-    );
-  } else {
-    res.header("Access-Control-Allow-Origin", frontEndUrl);
-    res.send({ status: "error", m: "ada data yang tdk lengkap" });
-  }
-});
+//                     dataNews["url"] = newUrl;
+//                     fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
+//                       if (err) throw err;
+//                       fs.writeFile(
+//                         `./db/api/${newUrl}.json`,
+//                         JSON.stringify(dataNews, null, 2),
+//                         (err) => {
+//                           if (err) throw err;
+//                           res.header(
+//                             "Access-Control-Allow-Origin",
+//                             frontEndUrl
+//                           );
+//                           res.send({ status: "ok" });
+//                         }
+//                       );
+//                     });
+//                   }
+//                 );
+//               } else {
+//                 fs.writeFile(
+//                   `./db/api/${req.body.Bjudul}.json`,
+//                   JSON.stringify(dataNews, null, 2),
+//                   (err) => {
+//                     if (err) throw err;
+//                     res.header("Access-Control-Allow-Origin", frontEndUrl);
+//                     res.send({ status: "ok" });
+//                   }
+//                 );
+//               }
+//             }
+//           );
+//         }
+//       }
+//     );
+//   } else {
+//     res.header("Access-Control-Allow-Origin", frontEndUrl);
+//     res.send({ status: "error", m: "ada data yang tdk lengkap" });
+//   }
+// });
 
-app.post("/admin/del", upload.array("id"), (req, res) => {
-  res.header("Access-Control-Allow-Origin", frontEndUrl);
-  const stat = {
-    dbMysql: false,
-    dbDir: false,
-  };
-  db.query(`DELETE FROM a_news_data WHERE id=${req.body.id}`, (err, result) => {
-    if (err) throw err;
+// app.post("/admin/del", upload.array("id"), (req, res) => {
+//   res.header("Access-Control-Allow-Origin", frontEndUrl);
+//   const stat = {
+//     dbMysql: false,
+//     dbDir: false,
+//   };
+//   db.query(`DELETE FROM a_news_data WHERE id=${req.body.id}`, (err, result) => {
+//     if (err) throw err;
 
-    if (result.affectedRows != 0) {
-      stat.dbMysql = true;
-      fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
-        if (err) throw err;
-        if (req.body.img != "null") {
-          fs.rm(`./db/api/${req.body.img}`, (err) => {
-            if (err) throw err;
+//     if (result.affectedRows != 0) {
+//       stat.dbMysql = true;
+//       fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
+//         if (err) throw err;
+//         if (req.body.img != "null") {
+//           fs.rm(`./db/api/${req.body.img}`, (err) => {
+//             if (err) throw err;
 
-            stat.dbDir = true;
-            res.header("Access-Control-Allow-Origin", frontEndUrl);
-            res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
-          });
-        } else {
-          stat.dbDir = true;
-          res.header("Access-Control-Allow-Origin", frontEndUrl);
-          res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
-        }
-      });
-    } else {
-      res.send(`"error terjadi, mungkin karena data ditak ditemukan di db"`);
-    }
-  });
-});
+//             stat.dbDir = true;
+//             res.header("Access-Control-Allow-Origin", frontEndUrl);
+//             res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
+//           });
+//         } else {
+//           stat.dbDir = true;
+//           res.header("Access-Control-Allow-Origin", frontEndUrl);
+//           res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
+//         }
+//       });
+//     } else {
+//       res.send(`"error terjadi, mungkin karena data ditak ditemukan di db"`);
+//     }
+//   });
+// });
 
-app.listen(8000, () => {
-  console.log("server running");
-});
+// app.listen(8000, () => {
+//   console.log("server running");
+// });
