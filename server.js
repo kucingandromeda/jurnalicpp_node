@@ -50,21 +50,20 @@ db.connect(function (err) {
 const multer = require("multer");
 const disk = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "db/api");
+    cb(null, "api");
   },
   filename: (req, file, cb) => {
-    if (file.mimetype.includes("json")) {
+    if (file.mimetype.includes("html")) {
       const filename = file.originalname.replace(/ /g, "-");
       cb(null, filename);
     } else {
-      const filename = file.originalname.replace(/ /g, "-");
-      cb(null, filename);
+      cb(null, file.originalname);
     }
   },
 });
 
 const filterMulter = (req, file, cb) => {
-  if (file.mimetype.includes("image") || file.mimetype.includes("json")) {
+  if (file.mimetype.includes("image") || file.mimetype.includes("html")) {
     cb(null, true);
   } else {
     cb(null, false);
@@ -140,8 +139,36 @@ app.get("/test", (req, res) => {
 // post
 
 app.post("/admin/publishtest", upload.array("files"), (req, res) => {
-  // console.log(req.body);
-  res.send({ stat: "woke" });
+  if (!req.files[0])
+    return res.send('"sepertinya ini bukan HTML ataupun image yah"');
+  req.files.forEach((data) => {
+    if (data.mimetype.includes("html")) {
+      const judul = data.originalname.slice(0, -5);
+      const penulis = req.body.penulis;
+      const genre = req.body.genre;
+      // const img = req.files.find((data) => data.mimetype.includes("image"));
+      const img = JSON.parse(req.body.imgStat)
+        ? req.files.find((data) => data.mimetype.includes("image"))
+        : null;
+      const url = judul.replace(/ /g, "-");
+      db.query(
+        "INSERT INTO a_news_index (id, judul, penulis, genre, img, url) VALUES (?, ?, ?, ?, ?, ?)",
+        [null, judul, penulis, genre, img ? img.filename : null, url],
+        (err, result) => {
+          console.log(result);
+        }
+      );
+      // const obj = {
+      //   judul: judul,
+      //   penulis: penulis,
+      //   genre: genre,
+      //   img: img ? img.filename : null,
+      //   url: url,
+      // };
+      // console.log(obj);
+    }
+  });
+  res.send('"woke"');
 });
 
 app.post("/admin/publish", upload.array("files"), (req, res) => {
