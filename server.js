@@ -216,89 +216,75 @@ app.post("/admin/publish", upload.array("files"), (req, res) => {
 
 //edit
 
-// app.post("/admin/edit", upload.single("atribut"), (req, res) => {
-//   const stat = {
-//     dbMysql: false,
-//     dbDir: false,
-//   };
-//   if (req.body.id && req.body.atribut && req.body.new) {
-//     db.query(
-//       `UPDATE a_news_data SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
-//       (err, result) => {
-//         if (err) throw err;
-//         if (result) {
-//           stat.dbMysql = true;
-//           fs.readFile(
-//             `./db/api/${req.body.Bjudul}.json`,
-//             { encoding: "utf-8" },
-//             (err, data) => {
-//               if (err) throw err;
-//               const dataNews = JSON.parse(data);
-//               dataNews[req.body.atribut] = req.body.new;
+app.post("/admin/edit", upload.single("atribut"), (req, res) => {
+  if (!req.body.id || !req.body.Bjudul || !req.body.atribut || !req.body.new)
+    return res.send('"sepertinya data tidak lengkap"');
 
-//               if (req.body.atribut === "judul") {
-//                 const url = dataNews.judul;
-//                 const newUrl = url.replace(/ /g, "-");
-//                 db.query(
-//                   `UPDATE a_news_data SET url='${newUrl}' WHERE id=${req.body.id}`,
-//                   (err, result) => {
-//                     if (err) throw err;
+  if (req.body.atribut === "judul") {
+    console.log(req.body);
+    db.query(
+      `UPDATE a_news_index SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
+      (err, result) => {
+        if (err) throw err;
+        if (result.affectedRows === 0) return res.send(`"affectedRows is 0"`);
 
-//                     dataNews["url"] = newUrl;
-//                     fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
-//                       if (err) throw err;
-//                       fs.writeFile(
-//                         `./db/api/${newUrl}.json`,
-//                         JSON.stringify(dataNews, null, 2),
-//                         (err) => {
-//                           if (err) throw err;
-//                           res.header(
-//                             "Access-Control-Allow-Origin",
-//                             frontEndUrl
-//                           );
-//                           res.send({ status: "ok" });
-//                         }
-//                       );
-//                     });
-//                   }
-//                 );
-//               } else {
-//                 fs.writeFile(
-//                   `./db/api/${req.body.Bjudul}.json`,
-//                   JSON.stringify(dataNews, null, 2),
-//                   (err) => {
-//                     if (err) throw err;
-//                     res.header("Access-Control-Allow-Origin", frontEndUrl);
-//                     res.send({ status: "ok" });
-//                   }
-//                 );
-//               }
-//             }
-//           );
-//         }
-//       }
-//     );
-//   } else {
-//     res.header("Access-Control-Allow-Origin", frontEndUrl);
-//     res.send({ status: "error", m: "ada data yang tdk lengkap" });
-//   }
-// });
+        const url = req.body.new.replace(/ /g, "-");
+        db.query(
+          `UPDATE a_news_index SET url='${url}' WHERE id=${req.body.id}`,
+          (err, result) => {
+            if (err) throw err;
+
+            fs.rename(
+              `api/${req.body.Bjudul}/${req.body.Bjudul}.html`,
+              `api/${req.body.Bjudul}/${url}.html`,
+              (err) => {
+                if (err) throw err;
+
+                fs.rename(`api/${req.body.Bjudul}`, `api/${url}`, (err) => {
+                  if (err) throw err;
+
+                  res.send('"sudah mengubah judul"');
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  } else {
+    db.query(
+      `UPDATE a_news_index SET ${req.body.atribut}='${req.body.new}' WHERE id=${req.body.id}`,
+      (err, result) => {
+        if (err) throw err;
+        if (result.affectedRows === 0) return res.send(`"affectedRows is 0"`);
+
+        res.send('"Berhasil diubah"');
+      }
+    );
+  }
+});
+
+//del
 
 app.post("/admin/del", upload.array("id"), (req, res) => {
   if (!req.body.id || !req.body.Bjudul)
     return res.send(`"maaf data sepertinya ada yang kurang"`);
+
   db.query(
     `SELECT id FROM a_news_index WHERE id=${req.body.id}`,
     (err, result) => {
       if (err) throw err;
       if (result.length == 0) return res.send('"data tidak ditemukan"');
+
       db.query(
         `DELETE FROM a_news_index WHERE id=${req.body.id}`,
         (err, result) => {
           if (err) throw err;
           console.log("sudah dihapus di db");
+
           fs.rm(`api/${req.body.Bjudul}`, { recursive: true }, (err) => {
             if (err) throw err;
+
             console.log("sudah dihapus di dir");
             res.send(`"berhasil menghapus guys"`);
           });
