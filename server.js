@@ -284,39 +284,30 @@ app.post("/admin/publish", upload.array("files"), (req, res) => {
 //   }
 // });
 
-// app.post("/admin/del", upload.array("id"), (req, res) => {
-//   res.header("Access-Control-Allow-Origin", frontEndUrl);
-//   const stat = {
-//     dbMysql: false,
-//     dbDir: false,
-//   };
-//   db.query(`DELETE FROM a_news_data WHERE id=${req.body.id}`, (err, result) => {
-//     if (err) throw err;
+app.post("/admin/del", upload.array("id"), (req, res) => {
+  if (!req.body.id || !req.body.Bjudul)
+    return res.send(`"maaf data sepertinya ada yang kurang"`);
+  db.query(
+    `SELECT id FROM a_news_index WHERE id=${req.body.id}`,
+    (err, result) => {
+      if (err) throw err;
+      if (result.length == 0) return res.send('"data tidak ditemukan"');
+      db.query(
+        `DELETE FROM a_news_index WHERE id=${req.body.id}`,
+        (err, result) => {
+          if (err) throw err;
+          console.log("sudah dihapus di db");
+          fs.rm(`api/${req.body.Bjudul}`, { recursive: true }, (err) => {
+            if (err) throw err;
+            console.log("sudah dihapus di dir");
+            res.send(`"berhasil menghapus guys"`);
+          });
+        }
+      );
+    }
+  );
+});
 
-//     if (result.affectedRows != 0) {
-//       stat.dbMysql = true;
-//       fs.rm(`./db/api/${req.body.Bjudul}.json`, (err) => {
-//         if (err) throw err;
-//         if (req.body.img != "null") {
-//           fs.rm(`./db/api/${req.body.img}`, (err) => {
-//             if (err) throw err;
-
-//             stat.dbDir = true;
-//             res.header("Access-Control-Allow-Origin", frontEndUrl);
-//             res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
-//           });
-//         } else {
-//           stat.dbDir = true;
-//           res.header("Access-Control-Allow-Origin", frontEndUrl);
-//           res.send(`" dbMysql => ${stat.dbMysql} dbDir   => ${stat.dbDir} "`);
-//         }
-//       });
-//     } else {
-//       res.send(`"error terjadi, mungkin karena data ditak ditemukan di db"`);
-//     }
-//   });
-// });
-
-// app.listen(8000, () => {
-//   console.log("server running");
-// });
+app.listen(8000, () => {
+  console.log("server running");
+});
