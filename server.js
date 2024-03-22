@@ -58,6 +58,13 @@ const mysql = require("mysql");
 //   database: "jicpp",
 // });
 
+// const db_user = mysql.createConnection({
+//   host: "103.175.216.188",
+//   user: "jicpp_user",
+//   password: "ADMIN",
+//   database: "jicpp_user",
+// });
+
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -78,9 +85,13 @@ db.connect(function (err) {
 });
 
 db_user.connect((err) => {
-  if (err) throw err;
+  try {
+    if (err) throw err;
 
-  console.log("db_user is connect");
+    console.log("db_user is connect");
+  } catch {
+    console.log("error on db_user");
+  }
 });
 
 //multer
