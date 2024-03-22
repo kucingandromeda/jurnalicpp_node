@@ -1,11 +1,11 @@
 ///set up phase
 
 //variable area
-// const frontEndUrl = "http://localhost:5173";
-const frontEndUrl = [
-  "https://jurnalicpp.online",
-  "https://admin2007.jurnalicpp.online",
-];
+const frontEndUrl = ["http://localhost:5173"];
+// const frontEndUrl = [
+//   "https://jurnalicpp.online",
+//   "https://admin2007.jurnalicpp.online",
+// ];
 
 //set up path
 const path = require("path");
@@ -23,11 +23,27 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (frontEndUrl.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", true);
   }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
+
+///my andro-session
+const cookie_parser = require("cookie-parser");
+app.use(cookie_parser());
+
+const session = require("express-session");
+app.use(
+  session({
+    name: "app.sid",
+    secret: "wwkwkwkwkwk this secret by by",
+    resave: true,
+    saveUninitialized: true,
+    cookie: { secure: false, maxAge: 43200000 },
+  })
+);
 
 //set up file system
 const fs = require("fs");
@@ -49,9 +65,22 @@ const db = mysql.createConnection({
   database: "jicpp",
 });
 
+const db_user = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "jicpp_user",
+});
+
 db.connect(function (err) {
   if (err) throw err;
   console.log("db is Connected!");
+});
+
+db_user.connect((err) => {
+  if (err) throw err;
+
+  console.log("db_user is connect");
 });
 
 //multer
@@ -68,6 +97,8 @@ const filterMulter = (req, file, cb) => {
 };
 
 const upload = multer({ storage: multerMemory, fileFilter: filterMulter });
+
+// express-session and make midleware
 
 //exe phase
 
@@ -117,6 +148,19 @@ app.get("/getSection/:type", (req, res) => {
         res.send(result);
       }
     );
+  }
+});
+
+app.get("/session", (req, res) => {
+  const errorServer = new Error("");
+  try {
+    if (!req.session.akun)
+      return res.send(JSON.stringify({ servertext: false }));
+    res.send(
+      JSON.stringify({ servertext: true, nama_akun: req.session.akun.name })
+    );
+  } catch {
+    res.send(JSON.stringify({ servertext: "error on server" }));
   }
 });
 
@@ -288,18 +332,111 @@ app.post("/admin/del", upload.array("id"), (req, res) => {
         `DELETE FROM a_news_index WHERE id=${req.body.id}`,
         (err, result) => {
           if (err) throw err;
-          console.log("sudah dihapus di db");
 
           fs.rm(`api/${req.body.Bjudul}`, { recursive: true }, (err) => {
             if (err) throw err;
 
-            console.log("sudah dihapus di dir");
             res.send(`"berhasil menghapus guys"`);
           });
         }
       );
     }
   );
+});
+
+///////// login signin
+
+app.post("/login", upload.single(""), (req, res) => {
+  const errorExpress = new Error("");
+  try {
+    const name = req.body.name;
+    const pass = req.body.pass;
+    if (!name || !pass) throw errorExpress;
+
+    db.query(
+      "SELECT * FROM user_login WHERE nama=? AND pass=?",
+      [name, pass],
+      (err, result) => {
+        if (err) throw err;
+
+        if (result.length <= 0)
+          return res.send(
+            JSON.stringify({ servertext: "nama atau password tidak ditemukan" })
+          );
+
+        res.send(JSON.stringify({ servertext: "suksess" }));
+        req.session.akun = {
+          name: name,
+          pass: pass,
+        };
+        req.session.save((err) => {});
+      }
+    );
+  } catch {
+    res.send(JSON.stringify({ servertext: "error on server" }));
+  }
+});
+
+app.post("/signin", upload.single(""), (req, res) => {
+  const errorExpress = new Error("");
+  try {
+    const name = req.body.name;
+    const pass = req.body.pass;
+    if (!name || !pass) throw errorExpress;
+
+    db.query("SELECT * FROM user_login WHERE nama=?", [name], (err, result) => {
+      if (err) throw err;
+
+      console.log(result);
+      if (result.length > 0)
+        return res.send(JSON.stringify({ servertext: "nama sudah terpakai" }));
+
+      db.query(
+        "INSERT INTO user_login (id, nama, pass) VALUES (?, ?, ?)",
+        [null, name, pass],
+        (err, result) => {
+          if (err) throw err;
+
+          if (result.affectedRows <= 0)
+            res.send(
+              JSON.stringify({ servertext: "error dalam mamasukkan data" })
+            );
+
+          db_user.query(
+            `CREATE TABLE ${name} (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+              type VARCHAR(255),
+              desk VARCHAR(255)
+          )`,
+            (err, result) => {
+              if (err) throw err;
+
+              req.session.akun = {
+                name: name,
+                pass: pass,
+              };
+              res.send(JSON.stringify({ servertext: "suksess" }));
+            }
+          );
+        }
+      );
+    });
+  } catch {
+    console.log("erroring in db");
+    res.send(JSON.stringify({ servertext: "error on server" }));
+  }
+});
+
+app.post("/logout", upload.single(""), (req, res) => {
+  if (!req.body.user)
+    return res.send(
+      JSON.stringify({ servertext: "not get user", stat: false })
+    );
+
+  req.session.destroy((err) => {
+    if (err) throw err;
+  });
+  res.send(JSON.stringify({ servertext: "log out suksess", stat: true }));
 });
 
 app.listen(8000, () => {
